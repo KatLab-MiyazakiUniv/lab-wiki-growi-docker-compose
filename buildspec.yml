@@ -1,0 +1,26 @@
+version: 0.2
+ 
+phases:
+  pre_build:
+    commands:
+      ## ECRにログイン
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+ 
+      ## Dockerイメージのタグとして使用するため、Gitのコミットハッシュを取得
+      - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
+  build:
+    commands:
+      ## Dockerイメージのビルド
+      - docker build -t $(echo IMAGE_REPOSITORY_NAME)_app:$IMAGE_TAG .
+      - docker build -t $(echo IMAGE_REPOSITORY_NAME)_elasticsearch:$IMAGE_TAG ./elasticsearch
+ 
+      ## DockerイメージのECRへのプッシュ
+      - docker push $(echo IMAGE_REPOSITORY_NAME)_app:$IMAGE_TAG
+      - docker push $(echo IMAGE_REPOSITORY_NAME)_elasticsearch:$IMAGE_TAG
+ 
+      ## ECS+CodeDeployにどのイメージを使用するか指示するためのファイルを作成
+      - printf '{"Version":"1.0","ImageURI":"%s","ImageURI2":"%s"}' $(echo IMAGE_REPOSITORY_NAME)_app $(echo IMAGE_REPOSITORY_NAME)_elasticsearch > imageDetail.json
+ 
+artifacts:
+  ## buildの最後で作成したファイルをアーティファクトとして流す
+  files: imageDetail.json
