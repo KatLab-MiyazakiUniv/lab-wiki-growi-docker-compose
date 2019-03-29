@@ -1,0 +1,25 @@
+version: 1
+task_definition:
+  ecs_network_mode: awsvpc
+  task_execution_role: ecsTaskExecutionRole
+  task_size:
+    cpu_limit: 512
+    mem_limit: 2GB
+  services:
+    web:
+      essential: true
+  extraHosts: [
+      {
+        "hostname": "mongo",
+        "ipAddress": "127.0.0.1"
+      }
+    ]
+ 
+run_params:
+  network_configuration:
+    awsvpc_configuration:
+      subnets:
+        - subnet-0b0a2aed5a2b62dcc
+        - subnet-0cd9ac6ac463a4065
+      security_groups:
+        - sg-098cbd82d16497b2d

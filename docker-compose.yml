@@ -2,20 +2,12 @@ version: '3'
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: 727498003651.dkr.ecr.ap-northeast-1.amazonaws.com/kat-wiki/app:latest
     ports:
-      - 80:3000    # localhost only by default
-    links:
-      - mongo:mongo
-      - elasticsearch:elasticsearch
-    depends_on:
-      - mongo
-      - elasticsearch
+      - 3000:3000    # localhost only by default
     environment:
-      - MONGO_URI=mongodb://mongo:27017/growi
-      - ELASTICSEARCH_URI=http://elasticsearch:9200/growi
+      - MONGO_URI=mongodb://127.0.0.1:27017/growi
+      - ELASTICSEARCH_URI=http://127.0.0.1:9200/growi
       - PASSWORD_SEED=changeme
       # - FILE_UPLOAD=local     # activate this line if you use local storage of server rather than AWS
       # - MATHJAX=1             # activate this line if you want to use MathJax
@@ -24,25 +16,21 @@ services:
       # - HACKMD_URI_FOR_SERVER=http://hackmd:3000  # activate this line and specify HackMD server URI which can be accessed from this server container
 
     command: "dockerize
-              -wait tcp://mongo:27017
-              -wait tcp://elasticsearch:9200
+              -wait tcp://127.0.0.1:27017
+              -wait tcp://127.0.0.1:9200
               -timeout 60s
               npm run server:prod"
-    restart: unless-stopped
     volumes:
       - growi_data:/data
 
   mongo:
     image: mongo:3.6
-    restart: unless-stopped
     volumes:
       - mongo_configdb:/data/configdb
       - mongo_db:/data/db
 
   elasticsearch:
-    build:
-      context: ./elasticsearch
-      dockerfile: ./Dockerfile
+    image: 727498003651.dkr.ecr.ap-northeast-1.amazonaws.com/kat-wiki/elasticsearch:latest
     environment:
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"  # increase amount if you have enough memory
@@ -63,12 +51,10 @@ services:
       # - AWS_ACCESS_KEY_ID=${Your IAM Access Key ID}           # change it
       # - AWS_SECRET_ACCESS_KEY=${Your IAM Secret Access Key}   # change it
       # - S3_TARGET_BUCKET_URL=s3://${Your Bucket Name}/        # change it
-    links:
-      - mongo:mongo
     restart: unless-stopped
     volumes:
       - ./crontab/root:/var/spool/cron/crontabs/root
-      
+
 volumes:
   growi_data:
   mongo_configdb:
